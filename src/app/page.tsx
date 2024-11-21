@@ -1,101 +1,143 @@
+"use client";
+import { useSearchParams, useRouter } from "next/navigation";
+import { client } from "@/sanity/lib/client";
 import Image from "next/image";
+import { urlFor } from "@/sanity/lib/image";
+import { useEffect, useState } from "react";
+
+type WatchType = {
+  _id: string;
+  title: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+};
+
+// Fetch data from Sanity (server-side)
+async function fetchWatches(): Promise<WatchType[]> {
+  return client.fetch(`*[_type=="watch"]`);
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [watches, setWatches] = useState<WatchType[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const category = searchParams.get("category"); // Read the category from the query string
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  // Filter watches based on the category
+  const filteredWatches = watches.filter((watch) =>
+    !category || category === "all" ? true : watch.category === category
+  );
+
+  // Get random watches for the slider
+  const randomWatches = watches.sort(() => Math.random() - Math.random()).slice(0, 5);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const data = await fetchWatches();
+      setWatches(data);
+    };
+    loadData();
+  }, []);
+
+  // Slider logic: Only active on the landing page (no query string)
+  useEffect(() => {
+    if (!category) {
+      const intervalId = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % randomWatches.length);
+      }, 2000); // Change slide every 2 seconds
+      return () => clearInterval(intervalId); // Clear interval on cleanup
+    }
+  }, [randomWatches, category]);
+
+  const handleNavigation = (selectedCategory: string) => {
+    router.push(`/?category=${selectedCategory}`);
+  };
+
+  const handlePrevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + randomWatches.length) % randomWatches.length);
+  };
+
+  const handleNextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % randomWatches.length);
+  };
+
+  return (
+    <div className="text-blue-950">
+      
+
+      {/* Main Section */}
+      <div className="p-[70px]">
+        {!category ? (
+          // Landing Page Features (Slider)
+          <div>
+            <h1 className="text-4xl font-bold text-center mb-8">Welcome to WatchIT</h1>
+            <p className="text-center text-gray-600 mb-4">
+              Tells more than time. Discover the finest watches for men, women, and kids.
+            </p>
+
+            {/* Image Slider */}
+            <div className="relative mb-8">
+              <div className="flex overflow-hidden justify-center items-center">
+                {/* Slider Images */}
+                {randomWatches.map((watch, index) => (
+                  <div
+                    key={watch._id}
+                    className={`transition-all duration-500 ease-in-out ${
+                      index === currentSlide ? "block" : "hidden"
+                    }`}
+                  >
+                    <Image
+                      src={urlFor(watch.image).url()}
+                      alt={watch.title}
+                      width={500}
+                      height={500}
+                      className="rounded-lg shadow-md cursor-pointer hover:scale-105 transition-all"
+                      onClick={() => {
+                        router.push(`/?category=${watch.category}#${watch._id}`);
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+              {/* Manual Controls */}
+              <button
+                onClick={handlePrevSlide}
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full"
+              >
+                &#10094;
+              </button>
+              <button
+                onClick={handleNextSlide}
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full"
+              >
+                &#10095;
+              </button>
+            </div>
+          </div>
+        ) : (
+          // Filtered Products
+          <div className="flex flex-wrap">
+            {filteredWatches.map((watch) => (
+              <div key={watch._id} className="basis-1/3 p-[20px] " id={watch._id} >
+                <div className="border-2 border-grey rounded shadow-md p-[20px] flex flex-col items-center justify-center cursor-pointer" onClick={()=>{router.push(`/AddToCart?watchid=${watch._id}`)}}>
+                  <Image
+                    src={urlFor(watch.image).url()}
+                    alt={watch.title}
+                    width={300}
+                    height={300}
+                  />
+                  <h3 className="text-base font-semibold">{watch.title}</h3>
+                  <p className="text-xs font-light">{watch.description}</p>
+                  <p className="text-sm font-light mt-[10px]">Rs. {watch.price}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
