@@ -1,5 +1,7 @@
 "use client";
-import React, { useEffect, useState } from "react";
+
+import React, { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation"; // Using useSearchParams from Next.js
 import { client } from "@/sanity/lib/client";
 import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
@@ -21,25 +23,19 @@ async function fetchWatchById(id: string | null): Promise<WatchType | null> {
 }
 
 function AddToCart() {
-  const [watchId, setWatchId] = useState<string | null>(null); // State to store watch ID
+  const searchParams = useSearchParams();
+  const watchIdFromUrl = searchParams.get("watchid"); // Get watchid from URL
   const [currentWatch, setCurrentWatch] = useState<WatchType | null>(null);
   const [quantity, setQuantity] = useState<number>(1); // State for quantity
 
-  // Fetch watchId from the URL search params after mount
+  // Fetch the watch details when watchId changes
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const watchIdFromUrl = searchParams.get("watchid");
-    setWatchId(watchIdFromUrl);
-  }, []); // Empty dependency array to run only once when the component mounts
-
-  // Fetch the watch details when the watchId changes
-  useEffect(() => {
-    if (watchId) {
-      fetchWatchById(watchId).then((watch) => setCurrentWatch(watch));
+    if (watchIdFromUrl) {
+      fetchWatchById(watchIdFromUrl).then((watch) => setCurrentWatch(watch));
     }
-  }, [watchId]);
+  }, [watchIdFromUrl]);
 
-  if (!currentWatch) return <div>Loading...</div>; // Show a loading state
+  if (!currentWatch) return <div>Loading...</div>; // Show a loading state if no watch is fetched
 
   // Calculate the total price
   const totalPrice = currentWatch.price * quantity;
@@ -94,4 +90,10 @@ function AddToCart() {
   );
 }
 
-export default AddToCart;
+export default function AddToCartPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AddToCart />
+    </Suspense>
+  );
+}
