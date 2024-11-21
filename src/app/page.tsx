@@ -52,9 +52,7 @@ export default function Home() {
     }
   }, [randomWatches, category]);
 
-  const handleNavigation = (selectedCategory: string) => {
-    router.push(`/?category=${selectedCategory}`);
-  };
+  
 
   const handlePrevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + randomWatches.length) % randomWatches.length);
