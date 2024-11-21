@@ -20,7 +20,7 @@ async function fetchWatchById(id: string | null): Promise<WatchType | null> {
   return client.fetch(`*[_type == "watch" && _id == $id][0]`, { id });
 }
 
-function Page() {
+function AddToCart() {
   const [watchId, setWatchId] = useState<string | null>(null); // State to store watch ID
   const [currentWatch, setCurrentWatch] = useState<WatchType | null>(null);
   const [quantity, setQuantity] = useState<number>(1); // State for quantity
@@ -94,4 +94,4 @@ function Page() {
   );
 }
 
-export default Page;
+export default AddToCart;
