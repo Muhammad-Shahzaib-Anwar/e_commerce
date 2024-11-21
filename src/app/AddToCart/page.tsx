@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { client } from "@/sanity/lib/client";
 import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
@@ -22,12 +21,18 @@ async function fetchWatchById(id: string | null): Promise<WatchType | null> {
 }
 
 function Page() {
-  const searchParams = useSearchParams();
-  const watchId = searchParams.get("watchid"); // Read the watchId from the query string
-
+  const [watchId, setWatchId] = useState<string | null>(null); // State to store watch ID
   const [currentWatch, setCurrentWatch] = useState<WatchType | null>(null);
   const [quantity, setQuantity] = useState<number>(1); // State for quantity
 
+  // Fetch watchId from the URL search params after mount
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const watchIdFromUrl = searchParams.get("watchid");
+    setWatchId(watchIdFromUrl);
+  }, []); // Empty dependency array to run only once when the component mounts
+
+  // Fetch the watch details when the watchId changes
   useEffect(() => {
     if (watchId) {
       fetchWatchById(watchId).then((watch) => setCurrentWatch(watch));

@@ -1,5 +1,5 @@
 "use client";
-import { useSearchParams, useRouter } from "next/navigation";
+import {  useRouter } from "next/navigation";
 import { client } from "@/sanity/lib/client";
 import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
@@ -22,9 +22,24 @@ async function fetchWatches(): Promise<WatchType[]> {
 export default function Home() {
   const [watches, setWatches] = useState<WatchType[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const searchParams = useSearchParams();
+  const [category, setCategory] = useState<string | null>(null);
   const router = useRouter();
-  const category = searchParams.get("category"); // Read the category from the query string
+
+  // Fetching watches data on initial load
+  useEffect(() => {
+    const loadData = async () => {
+      const data = await fetchWatches();
+      setWatches(data);
+    };
+    loadData();
+  }, []);
+
+  // Set category from search params on the client-side (using useEffect)
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const categoryParam = searchParams.get("category");
+    setCategory(categoryParam);
+  }, []);
 
   // Filter watches based on the category
   const filteredWatches = watches.filter((watch) =>
@@ -33,14 +48,6 @@ export default function Home() {
 
   // Get random watches for the slider
   const randomWatches = watches.sort(() => Math.random() - Math.random()).slice(0, 5);
-
-  useEffect(() => {
-    const loadData = async () => {
-      const data = await fetchWatches();
-      setWatches(data);
-    };
-    loadData();
-  }, []);
 
   // Slider logic: Only active on the landing page (no query string)
   useEffect(() => {
@@ -52,8 +59,6 @@ export default function Home() {
     }
   }, [randomWatches, category]);
 
-  
-
   const handlePrevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + randomWatches.length) % randomWatches.length);
   };
@@ -64,8 +69,6 @@ export default function Home() {
 
   return (
     <div className="text-blue-950">
-      
-
       {/* Main Section */}
       <div className="p-[70px]">
         {!category ? (
@@ -119,8 +122,13 @@ export default function Home() {
           // Filtered Products
           <div className="flex flex-wrap">
             {filteredWatches.map((watch) => (
-              <div key={watch._id} className="basis-1/3 p-[20px] " id={watch._id} >
-                <div className="border-2 border-grey rounded shadow-md p-[20px] flex flex-col items-center justify-center cursor-pointer" onClick={()=>{router.push(`/AddToCart?watchid=${watch._id}`)}}>
+              <div key={watch._id} className="basis-1/3 p-[20px]" id={watch._id}>
+                <div
+                  className="border-2 border-grey rounded shadow-md p-[20px] flex flex-col items-center justify-center cursor-pointer"
+                  onClick={() => {
+                    router.push(`/AddToCart?watchid=${watch._id}`);
+                  }}
+                >
                   <Image
                     src={urlFor(watch.image).url()}
                     alt={watch.title}
