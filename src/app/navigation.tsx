@@ -15,7 +15,7 @@ function Navigation() {
     // Event listener for the custom "cartUpdated" event
     const handleCartUpdate = (event: Event) => {
       const customEvent = event as CustomEvent<number>; // Type assertion for CustomEvent
-      setCartCount((prev) => prev + customEvent.detail); // Increment cart count
+      setCartCount((prev) => prev + 1);//customEvent.detail); // Increment cart count
     };
 
     // Add event listener when component mounts
