@@ -1,19 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense,useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ShoppingCart, Search } from "lucide-react"; // Import Lucide icons
 
-export default function Navigation() {
-  const [category, setCategory] = useState<string | null>(null); // State to track the current category
-  const [cartCount, setCartCount] = useState<number>(0); // State to track cart count
+function Navigation() {
+  const searchParams = useSearchParams();
+  const category = searchParams.get("category"); // Read the category from the query string
 
-  useEffect(() => {
-    // Fetch the category from the URL search params after component mounts
-    const searchParams = new URLSearchParams(window.location.search);
-    const categoryFromUrl = searchParams.get("category");
-    setCategory(categoryFromUrl); // Update the category state
-  }, []); // Empty dependency array ensures this runs only once after the component mounts
+  const [cartCount, setCartCount] = useState<number>(0); // State to track cart count
 
   useEffect(() => {
     // Event listener for the custom "cartUpdated" event
@@ -29,7 +25,7 @@ export default function Navigation() {
     return () => {
       window.removeEventListener("cartUpdated", handleCartUpdate);
     };
-  }, []); // Empty dependency array ensures this runs only once after the component mounts
+  }, []);
 
   return (
     <div className="flex justify-between items-center p-4 border-b border-gray-300">
@@ -74,5 +70,13 @@ export default function Navigation() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function NavigationPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Navigation />
+    </Suspense>
   );
 }
